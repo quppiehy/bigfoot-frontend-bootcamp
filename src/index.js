@@ -17,7 +17,7 @@ root.render(
             path="/sightings/:sightingIndex"
             element={<SightingDetails />}
           />
-          {/* <Route path="/" element={<App />} /> */}
+          <Route path="/:filterVal/:filterInput" element={<App />} />
         </Routes>
       </header>
     </div>

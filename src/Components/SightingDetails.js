@@ -11,14 +11,7 @@ import {
   IconButton,
   Typography,
 } from "@mui/material";
-// import CardHeader from "@mui/material/CardHeader";
-// import CardMedia from '@mui/material/CardMedia';
-// import CardContent from "@mui/material/CardContent";
-// import CardActions from "@mui/material/CardActions";
-// import Collapse from "@mui/material/Collapse";
-// import Avatar from "@mui/material/Avatar";
-// import IconButton from "@mui/material/IconButton";
-// import Typography from "@mui/material/Typography";
+
 import { indigo } from "@mui/material/colors";
 // import FavoriteIcon from '@mui/icons-material/Favorite';
 // import ShareIcon from '@mui/icons-material/Share';
@@ -52,10 +45,6 @@ export default function SightingDetails(props) {
   const { sightingIndex } = useParams();
   const [expanded, setExpanded] = useState(false);
 
-  const handleExpandClick = () => {
-    setExpanded(!expanded);
-  };
-
   useEffect(() => {
     console.log(sighting);
     console.log(sightingIndex);
@@ -82,13 +71,13 @@ export default function SightingDetails(props) {
             BF
           </Avatar>
         }
-        action={
-          <IconButton aria-label="settings">
-            <MoreVertIcon />
-          </IconButton>
-        }
+        // action={
+        //   <IconButton aria-label="settings">
+        //     <MoreVertIcon />
+        //   </IconButton>
+        // }
         title={sighting.YEAR}
-        subheader={sighting.COUNTY}
+        subheader={`${sighting.COUNTY}, ${sighting.STATE}`}
       />
       <CardContent>
         <TableContainer component={Paper}>
@@ -126,17 +115,19 @@ export default function SightingDetails(props) {
       <CardActions disableSpacing>
         <ExpandMore
           expand={expanded}
-          onClick={handleExpandClick}
+          onClick={() => setExpanded(!expanded)}
           aria-expanded={expanded}
           aria-label="show more"
         >
-          <ExpandMoreIcon />
+          <ExpandMoreIcon sx={{ color: "white" }} />
         </ExpandMore>
       </CardActions>
       <Collapse in={expanded} timeout="auto" unmountOnExit>
         <CardContent>
-          <Typography paragraph>Observations:</Typography>
-          <Typography paragraph align="justify">
+          <Typography paragraph style={{ color: "white" }}>
+            Observations:
+          </Typography>
+          <Typography paragraph align="justify" style={{ color: "white" }}>
             {sighting.OBSERVED}
           </Typography>
         </CardContent>
