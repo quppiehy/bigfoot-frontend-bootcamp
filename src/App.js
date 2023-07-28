@@ -1,96 +1,83 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// import logo from "./logo.png";
 import "./App.css";
 import axios from "axios";
-import { Box, Button } from "@mui/material";
+import { Box, Button, Modal } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-axios.defaults.baseURL = process.env.BASEURL;
+import PostForm from "../src/Components/PostForm";
+
+axios.defaults.baseURL = process.env.REACT_APP_BASEURL;
 
 export default function App() {
   const [sightings, setSightings] = useState([]);
   const [rows, setRows] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(null);
-  const [filtered, setFiltered] = useState(false);
-  const [ascending, setAscending] = useState(false);
-  const [sortByReportNumber, setSortByReportNumber] = useState(false);
-  const [filterVal, setFilterVal] = useState("");
-  const [filterInput, setFilterInput] = useState("");
-  const [toggleFiltered, setToggleFiltered] = useState(false);
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+
+  const style = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 400,
+    bgcolor: "background.paper",
+    border: "2px solid #000",
+    boxShadow: 24,
+    p: 4,
+  };
+
+  const retrieveSightings = async () => {
+    try {
+      console.log("in useEffect retrieve settings!");
+      let url = "/sightings";
+
+      const response = await axios.get(url);
+      const data = response.data;
+      setSightings(data);
+      console.log(data);
+    } catch (error) {
+      console.error("Error retrieving sightings: ", error);
+    }
+  };
 
   // get data upon load
   useEffect(() => {
     // getSightings by calling file
-    const retrieveSightings = async () => {
-      try {
-        console.log("in useEffect retrieve settings!");
-        let url = "/sightings";
-
-        if (filtered) {
-          url += `/${filterVal}/${filterInput}`;
-        }
-
-        const response = await axios.get(url);
-        const data = response.data;
-        setSightings(data);
-        console.log(data);
-      } catch (error) {
-        console.error("Error retrieving sightings: ", error);
-      }
-    };
-
     retrieveSightings();
-  }, [filtered, toggleFiltered]);
+  }, []);
 
   // column header
   const columns = [
-    { field: "id", headerName: "ID", width: 90 },
-    { field: "reportNumber", headerName: "Report No.", width: 100 },
-    { field: "year", headerName: "Year", width: 100 },
-    { field: "state", headerName: "State", width: 120 },
-    {
-      field: "reportClass",
-      headerName: "Report Class",
-      width: 100,
-    },
+    { field: "id", headerName: "ID", width: 50 },
+    { field: "date", headerName: "Date", width: 100 },
+    { field: "city", headerName: "City", width: 100 },
+    { field: "country", headerName: "Country", width: 100 },
   ];
-
-  useEffect(() => {
-    console.log(filtered);
-  }, [filtered]);
 
   // map rows
   useEffect(() => {
-    // const data = sightings.filter((sighting) =>
-    //   filtered ? sighting[filterVal] === filterInput : sightings
-    // );
-
-    const sorted = sortByReportNumber
-      ? ascending
-        ? [...sightings].sort((a, b) => a.REPORT_NUMBER - b.REPORT_NUMBER)
-        : [...sightings].sort((a, b) => b.REPORT_NUMBER - a.REPORT_NUMBER)
-      : sightings;
-
     const processSightings = () => {
-      const processedRows = sorted.map((sighting, index) => ({
-        id: index + 1,
-        reportNumber: sighting["REPORT_NUMBER"],
-        year: sighting["YEAR"],
-        state: sighting["STATE"],
-        reportClass: sighting["REPORT_CLASS"],
+      const processedRows = sightings.map((sighting, index) => ({
+        id: sighting["id"],
+        date: sighting["date"].substr(0, 10),
+        city: sighting["city"],
+        country: sighting["country"],
+        // notes: sighting["notes"],
+        // createdAt: sighting["createdAt"],
+        // updatedAt: sighting["updatedAt"],
       }));
       setRows(processedRows);
     };
 
     processSightings();
-  }, [sightings, sortByReportNumber, ascending]);
+  }, [sightings]);
 
   const handleRowClick = (params) => {
-    const reportNumber = params.row.reportNumber;
-    const index = sightings.findIndex(
-      (sighting) => sighting.REPORT_NUMBER === reportNumber
-    );
+    console.log(params.row.id);
+    const id = params.row.id;
+    console.log(sightings);
+    const index = sightings.find((sighting) => sighting.id === id).id;
     console.log(index);
     setSelectedIndex(index);
   };
@@ -110,136 +97,27 @@ export default function App() {
     <div className="App">
       {navigateToSightingDetails()}
       <header className="App-header">
-        {/* <img src={logo} className="App-logo" alt="logo" /> */}
         <h2>Bigfoot Sightings</h2>
         <br />
-        <form>
-          <label for="filterval">Filter results by: </label>
-          <select
-            name="filterval"
-            id="filterval"
-            onChange={(e) => setFilterVal(e.target.value)}
-            value={filterVal}
-          >
-            <option value="" disabled>
-              Pls select
-            </option>
-            <option value="YEAR">Year</option>
-            <option value="STATE">State</option>
-            <option value="REPORT_CLASS">Report Class</option>
-          </select>
-          <input
-            type="text"
-            value={filterInput}
-            onChange={(e) => setFilterInput(e.target.value)}
-          />
-          {filtered ? (
-            <div>
-              <Button
-                variant="contained"
-                onClick={() => {
-                  setFiltered(false);
-                  setToggleFiltered(!toggleFiltered);
-                  navigate(`/`);
-                }}
-                size="small"
-              >
-                No filter
-              </Button>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => {
-                  setFiltered(true);
-                  setToggleFiltered(!toggleFiltered);
-                  navigate(`/${filterVal}/${filterInput}`);
-                }}
-              >
-                Filter
-              </Button>
-            </div>
-          ) : (
-            <div>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => {
-                  setFiltered(true);
-                  setToggleFiltered(!toggleFiltered);
-                  navigate(`/${filterVal}/${filterInput}`);
-                }}
-              >
-                Filter
-              </Button>
-            </div>
-          )}
-          {sortByReportNumber ? (
-            <div>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => {
-                  setSortByReportNumber(false);
-                  setAscending(false);
-                }}
-              >
-                No sorting
-              </Button>
-              {ascending ? (
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => {
-                    setSortByReportNumber(true);
-                    setAscending(false);
-                  }}
-                >
-                  Sort By Descending
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => {
-                    setSortByReportNumber(true);
-                    setAscending(true);
-                  }}
-                >
-                  Sort By Ascending
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => {
-                  setSortByReportNumber(true);
-                  setAscending(true);
-                }}
-              >
-                Sort By Ascending
-              </Button>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => {
-                  setSortByReportNumber(true);
-                  setAscending(false);
-                }}
-              >
-                Sort By Descending
-              </Button>
-            </div>
-          )}
-        </form>
+        <Button size="small" variant="contained" onClick={() => setOpen(true)}>
+          Report Sighting
+        </Button>
 
         <br />
+        <Modal
+          open={open}
+          onClose={() => setOpen(false)}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box sx={style}>
+            <PostForm passSightings={setSightings} setOpen={setOpen} />
+          </Box>
+        </Modal>
         <Box
           sx={{
             height: "100%",
-            width: 550,
+            width: 400,
             backgroundColor: "#002984",
           }}
         >
@@ -270,7 +148,6 @@ export default function App() {
             onRowClick={handleRowClick}
           />
         </Box>
-        {/* {selectedIndex !== null && <SightingDetails index={selectedIndex} />} */}
       </header>
     </div>
   );
