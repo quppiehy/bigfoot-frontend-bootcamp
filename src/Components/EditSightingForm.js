@@ -89,7 +89,6 @@ export default function MyForm(props) {
         label="Location"
         placeholder="City, State"
         id="location"
-        fullWidth="true"
         size="small"
         value={locationDescription}
         onChange={(e) => setLocationDescription(e.target.value)}

@@ -13,14 +13,8 @@ import {
   Button,
   Box,
   Modal,
+  TextField,
 } from "@mui/material";
-// import {
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableContainer,
-//   TableRow,
-// } from "@mui/material";
 
 import { indigo } from "@mui/material/colors";
 // import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -36,6 +30,19 @@ import TableRow from "@mui/material/TableRow/TableRow";
 import Paper from "@mui/material/Paper/Paper";
 import { useParams } from "react-router-dom";
 import EditSightingForm from "../Components/EditSightingForm";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import { ListItemSecondaryActionExtended } from "mui-listitem-extended";
+import ListItemAvatar from "@mui/material/ListItemAvatar";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import FormGroup from "@mui/material/FormGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+import Grid from "@mui/material/Grid";
+import FolderIcon from "@mui/icons-material/Folder";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 
 axios.defaults.baseURL = process.env.REACT_APP_BASEURL;
 
@@ -55,6 +62,11 @@ export default function SightingDetails() {
   const { sightingIndex } = useParams();
   const [expanded, setExpanded] = useState(false);
   const [open, setOpen] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState("");
+  const [mode, setMode] = useState("");
+  const [commentIndex, setCommentIndex] = useState("");
+  // const [dense, setDense] = React.useState(false);
 
   const style = {
     position: "absolute",
@@ -67,6 +79,21 @@ export default function SightingDetails() {
     overflow: "scroll",
     display: "block",
     height: "100%",
+    boxShadow: 24,
+    p: 4,
+  };
+
+  const style2 = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 400,
+    bgcolor: "background.paper",
+    border: "2px solid #000",
+    overflow: "scroll",
+    display: "block",
+    height: 80,
     boxShadow: 24,
     p: 4,
   };
@@ -87,6 +114,61 @@ export default function SightingDetails() {
     onSightingClick();
   }, [sightingIndex]);
 
+  useEffect(() => {
+    const onLoad = async () => {
+      const curComments = await axios.get(
+        `/sightings/${sightingIndex}/comments`
+      );
+      const curCommentsData = curComments.data;
+      console.log(curCommentsData);
+      setComments(curCommentsData);
+    };
+    onLoad();
+  }, []);
+
+  const handlePostComment = async () => {
+    const currentComment = {
+      content: newComment,
+    };
+    const response = await axios.post(
+      `/sightings/${sightingIndex}/comments`,
+      currentComment
+    );
+    console.log(response.data);
+    setComments(response.data);
+    setNewComment("");
+  };
+
+  const handleDeleteComment = async (id) => {
+    console.log(id);
+    const response = await axios.delete(
+      `/sightings/${sightingIndex}/comments/${id}`
+    );
+    const currComments = response.data;
+    setComments(currComments);
+  };
+
+  const handleEditComment = async () => {
+    console.log(commentIndex);
+    const comment = {
+      content: newComment,
+    };
+    const response = await axios.put(
+      `/sightings/${sightingIndex}/comments/${commentIndex}`,
+      comment
+    );
+    const currComments = response.data;
+    setComments(currComments);
+    setNewComment("");
+    setOpen(false);
+  };
+
+  // const generateList = () => {
+  //   return comments.map((comment) => (
+  //     <Comment key={comment.id} content={comment.content} />
+  //   ));
+  // };
+
   return (
     <div className="App">
       <Modal
@@ -95,9 +177,30 @@ export default function SightingDetails() {
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
-        <Box sx={style}>
-          <EditSightingForm setOpen={setOpen} passSighting={setSighting} />
-        </Box>
+        {mode === "editSighting" ? (
+          <Box sx={style}>
+            <EditSightingForm setOpen={setOpen} passSighting={setSighting} />
+          </Box>
+        ) : mode === "editComment" ? (
+          <Box sx={style2}>
+            <TextField
+              label="editComment"
+              id="editComment"
+              size="small"
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+            />
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleEditComment}
+            >
+              Save
+            </Button>
+          </Box>
+        ) : (
+          <React.Fragment></React.Fragment>
+        )}
       </Modal>
       <Card sx={{ maxWidth: 500 }} style={{ backgroundColor: "#002984" }}>
         <CardHeader
@@ -135,7 +238,10 @@ export default function SightingDetails() {
                     <Button
                       size="small"
                       variant="contained"
-                      onClick={() => setOpen(true)}
+                      onClick={() => {
+                        setMode("editSighting");
+                        setOpen(true);
+                      }}
                     >
                       Edit Sighting
                     </Button>
@@ -156,6 +262,37 @@ export default function SightingDetails() {
               </TableBody>
             </Table>
           </TableContainer>
+          <br />
+          <TextField
+            sx={{
+              width: 380,
+              "& .css-1pysi21-MuiFormLabel-root-MuiInputLabel-root": {
+                color: "white",
+              },
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": {
+                  borderColor: "white",
+                },
+              },
+              "& .label.Mui-focused": {
+                color: "white",
+              },
+              "& .css-1jy569b-MuiFormLabel-root-MuiInputLabel-root": {
+                color: "white",
+              },
+            }}
+            inputProps={{ style: { color: "white" } }}
+            label="Comment"
+            placeholder="Add a comment!"
+            id="comment"
+            size="small"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+          />
+          {"     "}
+          <Button variant="contained" size="small" onClick={handlePostComment}>
+            Post
+          </Button>
         </CardContent>
         <CardActions disableSpacing>
           <ExpandMore
@@ -169,7 +306,8 @@ export default function SightingDetails() {
         </CardActions>
         <Collapse in={expanded} timeout="auto" unmountOnExit>
           <CardContent>
-            <Typography paragraph style={{ color: "white" }}>
+            {/* <Comments /> */}
+            {/* <Typography paragraph style={{ color: "white" }}>
               Created At:
             </Typography>
             <Typography paragraph align="justify" style={{ color: "white" }}>
@@ -180,7 +318,40 @@ export default function SightingDetails() {
             </Typography>
             <Typography paragraph align="justify" style={{ color: "white" }}>
               {sighting.updatedAt ? sighting.updatedAt.substr(0, 10) : ""}
-            </Typography>
+            </Typography> */}
+
+            {comments.map((comment) => (
+              <List dense={true} key={comment.id}>
+                <ListItem
+                  secondaryAction={
+                    <ListItemSecondaryActionExtended>
+                      <IconButton edge="end">
+                        <DeleteIcon
+                          sx={{ color: "white" }}
+                          onClick={() => handleDeleteComment(comment.id)}
+                        />
+                      </IconButton>
+                      <IconButton edge="end">
+                        <EditIcon
+                          sx={{ color: "white" }}
+                          onClick={() => {
+                            setMode("editComment");
+                            setNewComment(comment.content);
+                            setCommentIndex(comment.id);
+                            setOpen(true);
+                          }}
+                        />
+                      </IconButton>
+                    </ListItemSecondaryActionExtended>
+                  }
+                >
+                  <ListItemText
+                    sx={{ color: "white" }}
+                    primary={comment.content ? comment.content : ""}
+                  />
+                </ListItem>
+              </List>
+            ))}
           </CardContent>
         </Collapse>
       </Card>
