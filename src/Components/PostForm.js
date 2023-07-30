@@ -3,14 +3,16 @@ import axios from "axios";
 import { Box, Button, Typography, TextField, Stack } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import Select from "react-select";
+// import Creatable, { useCreatable } from "react-select/creatable";
+// import AsyncCreatableSelect from "react-select/async-creatable";
 import makeAnimated from "react-select/animated";
-import {
-  WiDaySunny,
-  WiCloudy,
-  WiSnow,
-  WiRain,
-  WiWindy,
-} from "weather-icons-react";
+// import {
+//   WiDaySunny,
+//   WiCloudy,
+//   WiSnow,
+//   WiRain,
+//   WiWindy,
+// } from "weather-icons-react";
 axios.defaults.baseURL = process.env.REACT_APP_BASEURL;
 
 export default function MyForm(props) {
@@ -22,6 +24,7 @@ export default function MyForm(props) {
   const [categories, setCategories] = useState("");
   const [options, setOptions] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  // const [newCategory, setNewCategory] = useState("");
   const navigate = useNavigate();
 
   // for react-select
@@ -34,6 +37,14 @@ export default function MyForm(props) {
 
   // for react - select
   const animatedComponents = makeAnimated();
+
+  // react-select create new categories
+  // const promiseOptions = (inputValue: string) =>
+  //   new Promise<categories>((resolve) => {
+  //     setTimeout(() => {
+  //       resolve(addCategory(inputValue));
+  //     }, 1000);
+  //   })
 
   // on save edits
   const handleSubmit = async () => {
@@ -50,15 +61,26 @@ export default function MyForm(props) {
       const response = await axios.post("/sightings/new", newSighting);
       console.log(response);
       const id = response.data.length;
-      const newSightingsCategories = {
+      const newSightingsCategories = selectedCategories.map((category) => ({
         sightingId: id,
-        categoryId: selectedCategories[0].id,
-      };
-      const result = await axios.post(
-        "/sighting_categories",
-        newSightingsCategories
-      );
-      console.log(result);
+        categoryId: category.id,
+      }));
+      const requestBody = { sightingsCategories: newSightingsCategories };
+
+      if (selectedCategories.length > 1) {
+        const result = await axios.post(
+          "/sighting_categories/bulk",
+          requestBody
+        );
+        console.log(result);
+      } else if (selectedCategories.length === 1) {
+        const result = await axios.post(
+          "/sighting_categories",
+          newSightingsCategories
+        );
+        console.log(result);
+      }
+
       await props.passSightings(response.data);
       props.setOpen(false);
       navigate(`/sightings/${id}`);
@@ -84,13 +106,15 @@ export default function MyForm(props) {
     console.log(options);
   }, [options]);
 
+  // api call to get Categories from backend
+  const getCategories = async () => {
+    const response = await axios.get("/categories");
+    console.log(response);
+    setCategories(response.data);
+  };
+
   //onLoad
   useEffect(() => {
-    const getCategories = async () => {
-      const response = await axios.get("/categories");
-      console.log(response);
-      setCategories(response.data);
-    };
     getCategories();
   }, []);
 

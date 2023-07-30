@@ -14,6 +14,7 @@ import {
   Box,
   Modal,
   TextField,
+  Stack,
 } from "@mui/material";
 
 import { indigo } from "@mui/material/colors";
@@ -99,6 +100,14 @@ export default function SightingDetails() {
     p: 4,
   };
 
+  const Item = styled(Paper)(({ theme }) => ({
+    backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
+    ...theme.typography.body2,
+    padding: theme.spacing(1),
+    textAlign: "center",
+    color: theme.palette.text.secondary,
+  }));
+
   useEffect(() => {
     console.log(sighting);
     console.log(sightingIndex);
@@ -113,20 +122,19 @@ export default function SightingDetails() {
       setSighting(data);
 
       // extract category from Sighting
-      const category = data.categories[0];
+      const category = data.categories;
       console.log(category);
       if (typeof category !== "undefined") {
         setCategories(category);
       } else {
         setCategories("N/A");
       }
-
-      // set Weather Icon
     };
 
     onSightingClick();
   }, [sightingIndex]);
 
+  // to assign weather icon
   const weatherIcons =
     typeof categories !== "undefined"
       ? {
@@ -138,6 +146,7 @@ export default function SightingDetails() {
         }
       : null;
 
+  // to load comments on page load
   useEffect(() => {
     const onLoad = async () => {
       const curComments = await axios.get(
@@ -150,6 +159,7 @@ export default function SightingDetails() {
     onLoad();
   }, []);
 
+  // post new comment
   const handlePostComment = async () => {
     const currentComment = {
       content: newComment,
@@ -163,6 +173,7 @@ export default function SightingDetails() {
     setNewComment("");
   };
 
+  // delete comment
   const handleDeleteComment = async (id) => {
     console.log(id);
     const response = await axios.delete(
@@ -172,6 +183,7 @@ export default function SightingDetails() {
     setComments(currComments);
   };
 
+  // edit comment
   const handleEditComment = async () => {
     console.log(commentIndex);
     const comment = {
@@ -239,9 +251,17 @@ export default function SightingDetails() {
                 <TableRow>
                   <TableCell>Weather Condition</TableCell>
                   <TableCell>
-                    {categories !== "N/A" ? (
+                    {categories === "N/A" ? (
+                      "N/A"
+                    ) : Array.isArray(categories) && categories.length > 0 ? (
                       <div>
-                        {categories.name} {weatherIcons[categories.name]}
+                        <Stack direction="row" spacing={2}>
+                          {categories.map((category, index) => (
+                            <Item key={index}>
+                              {category.name} {weatherIcons[category.name]}{" "}
+                            </Item>
+                          ))}{" "}
+                        </Stack>
                       </div>
                     ) : (
                       "N/A"
