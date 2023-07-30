@@ -33,16 +33,16 @@ import EditSightingForm from "../Components/EditSightingForm";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import { ListItemSecondaryActionExtended } from "mui-listitem-extended";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
-import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import FormGroup from "@mui/material/FormGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
-import Grid from "@mui/material/Grid";
-import FolderIcon from "@mui/icons-material/Folder";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import {
+  WiDaySunny,
+  WiCloudy,
+  WiSnow,
+  WiRain,
+  WiWindy,
+} from "weather-icons-react";
 
 axios.defaults.baseURL = process.env.REACT_APP_BASEURL;
 
@@ -66,7 +66,8 @@ export default function SightingDetails() {
   const [newComment, setNewComment] = useState("");
   const [mode, setMode] = useState("");
   const [commentIndex, setCommentIndex] = useState("");
-  // const [dense, setDense] = React.useState(false);
+  const [categories, setCategories] = useState([]);
+  const [icon, setIcon] = useState("");
 
   const style = {
     position: "absolute",
@@ -78,7 +79,7 @@ export default function SightingDetails() {
     border: "2px solid #000",
     overflow: "scroll",
     display: "block",
-    height: "100%",
+    height: "70%",
     boxShadow: 24,
     p: 4,
   };
@@ -103,16 +104,39 @@ export default function SightingDetails() {
     console.log(sightingIndex);
   }, [sighting, sightingIndex]);
 
+  // to load data
   useEffect(() => {
     const onSightingClick = async () => {
-      const response = await axios.get(`/sightings/${sightingIndex}`);
-      const data = response.data;
+      let response = await axios.get(`/sightings/${sightingIndex}`);
+      let data = response.data;
       console.log(data);
       setSighting(data);
+
+      // extract category from Sighting
+      const category = data.categories[0];
+      console.log(category);
+      if (typeof category !== "undefined") {
+        setCategories(category);
+      } else {
+        setCategories("N/A");
+      }
+
+      // set Weather Icon
     };
 
     onSightingClick();
   }, [sightingIndex]);
+
+  const weatherIcons =
+    typeof categories !== "undefined"
+      ? {
+          Sunny: <WiDaySunny size={24} color="#000" />,
+          Raining: <WiRain size={24} color="#000" />,
+          Cloudy: <WiCloudy size={24} color="#000" />,
+          Windy: <WiWindy size={24} color="#000" />,
+          Snowing: <WiSnow size={24} color="#000" />,
+        }
+      : null;
 
   useEffect(() => {
     const onLoad = async () => {
@@ -163,12 +187,6 @@ export default function SightingDetails() {
     setOpen(false);
   };
 
-  // const generateList = () => {
-  //   return comments.map((comment) => (
-  //     <Comment key={comment.id} content={comment.content} />
-  //   ));
-  // };
-
   return (
     <div className="App">
       <Modal
@@ -211,11 +229,6 @@ export default function SightingDetails() {
               BF
             </Avatar>
           }
-          // action={
-          //   <IconButton aria-label="settings">
-          //     <MoreVertIcon />
-          //   </IconButton>
-          // }
           title={sighting.date ? sighting.date.substr(0, 10) : ""}
           subheader={`${sighting.city}, ${sighting.country}`}
         />
@@ -224,12 +237,26 @@ export default function SightingDetails() {
             <Table>
               <TableBody>
                 <TableRow>
+                  <TableCell>Weather Condition</TableCell>
+                  <TableCell>
+                    {categories !== "N/A" ? (
+                      <div>
+                        {categories.name} {weatherIcons[categories.name]}
+                      </div>
+                    ) : (
+                      "N/A"
+                    )}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
                   <TableCell>Location Description</TableCell>
                   <TableCell>{sighting.locationdescription}</TableCell>
                 </TableRow>
 
                 <TableRow>
-                  <TableCell>Observations</TableCell>
+                  <TableCell style={{ verticalAlign: "top" }}>
+                    Observations
+                  </TableCell>
                   <TableCell>{sighting.notes}</TableCell>
                 </TableRow>
                 <TableRow>
@@ -319,7 +346,11 @@ export default function SightingDetails() {
             <Typography paragraph align="justify" style={{ color: "white" }}>
               {sighting.updatedAt ? sighting.updatedAt.substr(0, 10) : ""}
             </Typography> */}
-
+            {comments.length === 0 && (
+              <Typography paragraph sx={{ color: "white" }}>
+                No comments currently.
+              </Typography>
+            )}
             {comments.map((comment) => (
               <List dense={true} key={comment.id}>
                 <ListItem

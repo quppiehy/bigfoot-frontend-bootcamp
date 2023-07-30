@@ -1,7 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { Box, Button, Typography, TextField, Stack } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import Select from "react-select";
+import makeAnimated from "react-select/animated";
+import {
+  WiDaySunny,
+  WiCloudy,
+  WiSnow,
+  WiRain,
+  WiWindy,
+} from "weather-icons-react";
 axios.defaults.baseURL = process.env.REACT_APP_BASEURL;
 
 export default function MyForm(props) {
@@ -10,8 +19,23 @@ export default function MyForm(props) {
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
   const [observation, setObservation] = useState("");
+  const [categories, setCategories] = useState("");
+  const [options, setOptions] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const navigate = useNavigate();
 
+  // for react-select
+  const selectStyles = {
+    menu: (base) => ({
+      ...base,
+      zIndex: 100,
+    }),
+  };
+
+  // for react - select
+  const animatedComponents = makeAnimated();
+
+  // on save edits
   const handleSubmit = async () => {
     const inputDate = new Date(sightingDate);
     const newSighting = {
@@ -26,6 +50,15 @@ export default function MyForm(props) {
       const response = await axios.post("/sightings/new", newSighting);
       console.log(response);
       const id = response.data.length;
+      const newSightingsCategories = {
+        sightingId: id,
+        categoryId: selectedCategories[0].id,
+      };
+      const result = await axios.post(
+        "/sighting_categories",
+        newSightingsCategories
+      );
+      console.log(result);
       await props.passSightings(response.data);
       props.setOpen(false);
       navigate(`/sightings/${id}`);
@@ -34,10 +67,43 @@ export default function MyForm(props) {
     }
   };
 
+  useEffect(() => {
+    console.log(categories);
+    const options =
+      categories.length !== 0
+        ? categories.map((category) => ({
+            value: category.name,
+            label: category.name,
+            id: category.id,
+          }))
+        : [];
+    setOptions(options);
+  }, [categories]);
+
+  useEffect(() => {
+    console.log(options);
+  }, [options]);
+
+  //onLoad
+  useEffect(() => {
+    const getCategories = async () => {
+      const response = await axios.get("/categories");
+      console.log(response);
+      setCategories(response.data);
+    };
+    getCategories();
+  }, []);
+
+  // save react-select change to state
+  const handleChange = (selectedOption) => {
+    setSelectedCategories(selectedOption);
+    console.log(selectedOption);
+  };
+
   return (
     <Box
       sx={{
-        "& .MuiTextField-root": { m: 1, width: "25ch" },
+        "& .MuiTextField-root": { m: 1, width: "45ch" },
       }}
     >
       <Typography paragraph>
@@ -50,6 +116,15 @@ export default function MyForm(props) {
         size="small"
         value={sightingDate}
         onChange={(e) => setSightingDate(e.target.value)}
+      />
+      <Select
+        isMulti
+        options={options}
+        styles={selectStyles}
+        value={selectedCategories}
+        onChange={handleChange}
+        components={animatedComponents}
+        placeholder="Weather Conditions"
       />
       <TextField
         label="City"
@@ -81,11 +156,12 @@ export default function MyForm(props) {
         id="notes"
         size="small"
         multiline
+        maxRows={4}
         value={observation}
         onChange={(e) => setObservation(e.target.value)}
       />
       <br />
-      <Stack direction="row" justifyContent={"center"}>
+      <Stack direction="row" justifyContent={"right"}>
         <Button variant="contained" size="small" onClick={handleSubmit}>
           Submit Sighting
         </Button>

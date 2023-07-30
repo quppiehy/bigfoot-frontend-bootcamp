@@ -5,6 +5,13 @@ import axios from "axios";
 import { Box, Button, Modal } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import PostForm from "../src/Components/PostForm";
+import {
+  WiDaySunny,
+  WiCloudy,
+  WiSnow,
+  WiRain,
+  WiWindy,
+} from "weather-icons-react";
 
 axios.defaults.baseURL = process.env.REACT_APP_BASEURL;
 
@@ -47,22 +54,16 @@ export default function App() {
     retrieveSightings();
   }, []);
 
-  // column header
-  const columns = [
-    { field: "id", headerName: "ID", width: 50 },
-    { field: "date", headerName: "Date", width: 100 },
-    { field: "city", headerName: "City", width: 100 },
-    { field: "country", headerName: "Country", width: 100 },
-  ];
-
   // map rows
   useEffect(() => {
     const processSightings = () => {
       const processedRows = sightings.map((sighting, index) => ({
-        id: sighting["id"],
-        date: sighting["date"].substr(0, 10),
-        city: sighting["city"],
-        country: sighting["country"],
+        id: sighting.id,
+        date: sighting.date.substr(0, 10),
+        city: sighting.city,
+        country: sighting.country,
+        weather: sighting.categories[0]?.name ?? "N/A",
+        icon: sighting.categories[0]?.name || "N/A",
         // notes: sighting["notes"],
         // createdAt: sighting["createdAt"],
         // updatedAt: sighting["updatedAt"],
@@ -72,6 +73,38 @@ export default function App() {
 
     processSightings();
   }, [sightings]);
+
+  // assigning icon to row
+  const getIcon = (params) => {
+    if (params.value === "Sunny") {
+      return <WiDaySunny size={24} color="#FFF" />;
+    } else if (params.value === "Raining") {
+      return <WiRain size={24} color="#FFF" />;
+    } else if (params.value === "Snowing") {
+      return <WiSnow size={24} color="#FFF" />;
+    } else if (params.value === "Cloudy") {
+      return <WiCloudy size={24} color="#FFF" />;
+    } else if (params.value === "Windy") {
+      return <WiWindy size={24} color="#FFF" />;
+    } else if (params.getValue === "N/A") {
+      return "N/A";
+    }
+  };
+
+  // column header
+  const columns = [
+    { field: "id", headerName: "ID", width: 50 },
+    { field: "date", headerName: "Date", width: 100 },
+    { field: "city", headerName: "City", width: 100 },
+    { field: "country", headerName: "Country", width: 120 },
+    { field: "weather", headerName: "Weather", width: 100 },
+    {
+      field: "icon",
+      headerName: "",
+      width: 50,
+      renderCell: (params) => getIcon(params),
+    },
+  ];
 
   const handleRowClick = (params) => {
     console.log(params.row.id);
@@ -117,7 +150,7 @@ export default function App() {
         <Box
           sx={{
             height: "100%",
-            width: 400,
+            width: 550,
             backgroundColor: "#002984",
           }}
         >
