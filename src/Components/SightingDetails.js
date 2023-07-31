@@ -68,7 +68,6 @@ export default function SightingDetails() {
   const [mode, setMode] = useState("");
   const [commentIndex, setCommentIndex] = useState("");
   const [categories, setCategories] = useState([]);
-  const [icon, setIcon] = useState("");
 
   const style = {
     position: "absolute",
@@ -110,7 +109,13 @@ export default function SightingDetails() {
 
   useEffect(() => {
     console.log(sighting);
-    console.log(sightingIndex);
+    const category = sighting.categories;
+    console.log(category);
+    if (typeof category !== "undefined") {
+      setCategories(category);
+    } else {
+      setCategories("N/A");
+    }
   }, [sighting, sightingIndex]);
 
   // to load data
