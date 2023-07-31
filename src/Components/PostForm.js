@@ -38,14 +38,6 @@ export default function MyForm(props) {
   // for react - select
   const animatedComponents = makeAnimated();
 
-  // react-select create new categories
-  // const promiseOptions = (inputValue: string) =>
-  //   new Promise<categories>((resolve) => {
-  //     setTimeout(() => {
-  //       resolve(addCategory(inputValue));
-  //     }, 1000);
-  //   })
-
   // on save edits
   const handleSubmit = async () => {
     const inputDate = new Date(sightingDate);
@@ -65,12 +57,12 @@ export default function MyForm(props) {
         sightingId: id,
         categoryId: category.id,
       }));
-      const requestBody = { sightingsCategories: newSightingsCategories };
+      // const requestBody = { sightingsCategories: newSightingsCategories };
 
       if (selectedCategories.length > 1) {
         const result = await axios.post(
           "/sighting_categories/bulk",
-          requestBody
+          newSightingsCategories
         );
         console.log(result);
       } else if (selectedCategories.length === 1) {

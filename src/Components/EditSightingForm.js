@@ -55,8 +55,6 @@ export default function MyForm(props) {
         console.log(id);
         setSelectedCategoriesId(id);
       }
-    } else {
-      setSelectedCategories("Weather Conditions");
     }
   };
 
@@ -98,27 +96,103 @@ export default function MyForm(props) {
       console.log(response);
 
       const id = sightingIndex;
-      const newSightingsCategories = selectedCategories.map(
-        (category, index) => ({
-          sightingId: id,
-          categoryId: category.id,
-          id: selectedCategoriesId[index],
-        })
-      );
-      const requestBody = { sightingsCategories: newSightingsCategories };
-      if (selectedCategories.length > 1) {
-        const result = await axios.put(
-          "/sighting_categories/editMany",
-          requestBody
+      // const newSightingsCategories = selectedCategories.map(
+      //   (category, index) => ({
+      //     sightingId: id,
+      //     categoryId: category.id,
+      //     id: selectedCategoriesId[index],
+      //   })
+      // );
+      // const requestBody = { sightingsCategories: newSightingsCategories };
+      // if (selectedCategories.length > 1) {
+      //   const result = await axios.put(
+      //     "/sighting_categories/editMany",
+      //     requestBody
+      //   );
+      //   console.log(result);
+      // } else if (selectedCategories.length === 1) {
+      //   const result = await axios.put(
+      //     "/sighting_categories/editOne",
+      //     requestBody
+      //   );
+      //   console.log(result);
+      // }
+
+      // if same amt of categories as first load
+      if (selectedCategories.length === selectedCategoriesId.length) {
+        const newSightingsCategories = selectedCategories.map(
+          (category, index) => ({
+            sightingId: id,
+            categoryId: category.id,
+            id: selectedCategoriesId[index],
+          })
         );
-        console.log(result);
-      } else if (selectedCategories.length === 1) {
-        const result = await axios.put(
-          "/sighting_categories/editOne",
-          requestBody
-        );
-        console.log(result);
+        const requestBody = {
+          sightingsCategories: newSightingsCategories,
+        };
+        if (selectedCategories.length > 1) {
+          const result = await axios.put(
+            "/sighting_categories/editMany",
+            requestBody
+          );
+          console.log(result);
+        } else if (selectedCategories.length === 1) {
+          console.log(requestBody);
+          const result = await axios.put(
+            "/sighting_categories/editOne",
+            requestBody
+          );
+          console.log(result);
+        }
+      } else if (
+        //if more categories than first load
+        selectedCategories.length > selectedCategoriesId.length
+      ) {
+        console.log(selectedCategories);
+        const newSightingsCategories = [
+          {
+            sightingId: sightingIndex,
+            categoryId: selectedCategories[0].id,
+            id: selectedCategoriesId[0],
+          },
+        ];
+        const requestBody = {
+          sightingsCategories: newSightingsCategories,
+        };
+        console.log(requestBody);
+        if (selectedCategoriesId.length !== 0) {
+          const result = await axios.put(
+            "/sighting_categories/editOne",
+            requestBody
+          );
+          console.log(result);
+          selectedCategories.shift();
+          const addedSightingsCategories = selectedCategories.map(
+            (category) => ({
+              sightingId: id,
+              categoryId: category.id,
+            })
+          );
+          const reqBody = {
+            sightingsCategories: addedSightingsCategories,
+          };
+          const result2 = await axios.post(
+            "/sighting_categories/bulk",
+            reqBody
+          );
+          console.log(result2);
+        } else if (selectedCategoriesId.length === 0) {
+          delete newSightingsCategories[0].id;
+          const requestBody = { sightingsCategories: newSightingsCategories };
+          console.log(requestBody);
+          const result = await axios.post(
+            "/sighting_categories/new",
+            requestBody
+          );
+          console.log(result);
+        }
       }
+
       const finalResponse = await axios.get(`/sightings/${sightingIndex}`);
       // const id = response.data.length;
       await props.passSighting(finalResponse.data);
